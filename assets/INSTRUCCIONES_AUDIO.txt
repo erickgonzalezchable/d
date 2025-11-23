@@ -1,0 +1,29 @@
+# Instrucciones de Audio
+
+Para tener sonido en el juego, descarga archivos MP3 gratuitos y colócalos aquí con estos nombres:
+
+1. **music.mp3** - Música de fondo retro/8-bit
+2. **explosion.mp3** - Efecto de explosión/colisión
+3. **point.mp3** - Efecto de ding/punto
+
+## Sitios Recomendados para Descargar Audio Gratis:
+
+### Música de Fondo
+- https://freesound.org/
+- https://opengameart.org/
+- https://incompetech.com/ (busca música estilo "8-bit" o "chiptune")
+
+### Efectos de Sonido
+- https://www.zapsplat.com/
+- https://freesound.org/
+- https://mixkit.co/free-sound-effects/
+
+## Búsquedas Recomendadas:
+- "8-bit music"
+- "retro game music"
+- "chiptune"
+- "explosion sound"
+- "coin sound"
+- "point sound"
+
+**Nota:** El juego funciona perfectamente sin audio, pero es más divertido con sonido.
