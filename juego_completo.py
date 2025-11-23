@@ -26,8 +26,8 @@ from datetime import datetime
 # ============================================
 
 # Configuración de pantalla
-SCREEN_WIDTH = 800
-SCREEN_HEIGHT = 600
+SCREEN_WIDTH = 1024
+SCREEN_HEIGHT = 768
 FPS = 60
 
 # Configuración del canvas del juego
@@ -419,6 +419,7 @@ class Game:
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         pygame.display.set_caption("🏁 CARRERA RETRO 8-BIT 🏁")
         self.clock = pygame.time.Clock()
+        self.fullscreen = False
     
     
     def _init_fonts(self):
@@ -542,9 +543,9 @@ class Game:
     
     def _draw_menu_buttons(self):
         """Dibuja los botones del menú principal"""
-        button_y = 200
-        button_height = 60
-        button_spacing = 80
+        button_y = 180
+        button_height = 55
+        button_spacing = 70
         
         mouse_pos = pygame.mouse.get_pos()
         
@@ -583,12 +584,12 @@ class Game:
     
     def _draw_instructions(self):
         """Dibuja las instrucciones del juego"""
-        inst_y = SCREEN_HEIGHT - 200
+        inst_y = SCREEN_HEIGHT - 180
         pygame.draw.rect(self.screen, DARK_GREEN, 
-                        (50, inst_y, SCREEN_WIDTH - 100, 150), 2)
+                        (50, inst_y, SCREEN_WIDTH - 100, 140), 2)
         
         self.draw_text("INSTRUCCIONES", self.font_small, GREEN, 
-                      SCREEN_WIDTH // 2, inst_y + 20)
+                      SCREEN_WIDTH // 2, inst_y + 25)
         
         instructions = [
             "Jugador 1: ← → (Flechas)",
@@ -598,7 +599,7 @@ class Game:
         
         for i, inst in enumerate(instructions):
             self.draw_text(inst, self.font_tiny, GREEN, 
-                          SCREEN_WIDTH // 2, inst_y + 60 + i * 30)
+                          SCREEN_WIDTH // 2, inst_y + 65 + i * 28)
     
     def draw_scores_screen(self):
         """Dibuja la pantalla de puntuaciones"""
@@ -623,11 +624,11 @@ class Game:
         scores = self.get_top_scores()
         
         if scores:
-            y = 200
+            y = 220
             for i, score in enumerate(scores):
                 text = f"{i + 1}. {score['name']} - {score['score']} puntos"
                 self.draw_text(text, self.font_medium, GREEN, 
-                              SCREEN_WIDTH // 2, y + i * 80)
+                              SCREEN_WIDTH // 2, y + i * 75)
         else:
             self.draw_text("No hay puntajes registrados", self.font_medium, GREEN, 
                           SCREEN_WIDTH // 2, 300)
@@ -663,27 +664,27 @@ class Game:
     
     def _draw_player_info(self):
         """Dibuja la información de los jugadores en la parte superior"""
-        info_height = 100
+        info_height = 110
         pygame.draw.rect(self.screen, DARK_GREEN, (0, 0, SCREEN_WIDTH, info_height))
         
         for i, player in enumerate(self.players):
-            x = 50 if i == 0 else SCREEN_WIDTH - 250
-            y = 20
+            x = 60 if i == 0 else SCREEN_WIDTH - 240
+            y = 25
             
             self.draw_text(f"JUGADOR {player.player_num}", self.font_tiny, GREEN, 
                           x, y, center=False)
             self.draw_text(f"Puntos: {player.score}", self.font_tiny, GREEN, 
-                          x, y + 25, center=False)
+                          x, y + 28, center=False)
             self.draw_text(f"Nivel: {LEVELS[player.level]['name']}", self.font_tiny, GREEN, 
-                          x, y + 50, center=False)
+                          x, y + 56, center=False)
             self.draw_text(f"Velocidad: {player.speed_multiplier:.1f}x", self.font_tiny, GREEN, 
-                          x, y + 75, center=False)
+                          x, y + 84, center=False)
     
     
     def _draw_game_area(self):
         """Dibuja el área de juego con los canvas de los jugadores"""
-        info_height = 100
-        game_y = info_height + 20
+        info_height = 110
+        game_y = info_height + 15
         
         if self.game_mode == 'single':
             self._draw_single_player_canvas(game_y)
@@ -751,7 +752,7 @@ class Game:
     
     def _draw_final_scores(self):
         """Dibuja las puntuaciones finales"""
-        y = 250
+        y = 260
         
         if self.game_mode == 'single':
             self.draw_text(f"Puntuación Final: {self.players[0].score}", 
@@ -760,17 +761,17 @@ class Game:
             for player in self.players:
                 self.draw_text(f"Jugador {player.player_num}: {player.score} puntos", 
                               self.font_medium, player.color, SCREEN_WIDTH // 2, y)
-                y += 60
+                y += 55
     
     
     def _draw_game_over_buttons(self):
         """Dibuja los botones de game over"""
         mouse_pos = pygame.mouse.get_pos()
-        button_y = SCREEN_HEIGHT - 200
+        button_y = SCREEN_HEIGHT - 180
         
         buttons = [
             ("MENÚ PRINCIPAL", 'menu', button_y),
-            ("JUGAR DE NUEVO", 'restart', button_y + 80)
+            ("JUGAR DE NUEVO", 'restart', button_y + 75)
         ]
         
         self.game_over_buttons = []
@@ -946,12 +947,23 @@ class Game:
         sys.exit()
     
     
+    def toggle_fullscreen(self):
+        """Alterna entre pantalla completa y modo ventana"""
+        self.fullscreen = not self.fullscreen
+        if self.fullscreen:
+            self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.FULLSCREEN)
+        else:
+            self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+    
+    
     def _print_welcome_message(self):
         """Imprime el mensaje de bienvenida en consola"""
         print("🎮 Juego iniciado correctamente!")
         print("📋 Controles:")
         print("   - Jugador 1: Flechas ← →")
         print("   - Jugador 2: A D")
+        print("   - F11: Pantalla completa")
+        print("   - ESC: Volver al menú / Salir")
         print("\n¡Disfruta del juego!\n")
     
     
@@ -961,11 +973,22 @@ class Game:
             if event.type == pygame.QUIT:
                 return False
             
+            elif event.type == pygame.KEYDOWN:
+                # Toggle pantalla completa con F11
+                if event.key == pygame.K_F11:
+                    self.toggle_fullscreen()
+                # Permitir salir con ESC
+                elif event.key == pygame.K_ESCAPE:
+                    if self.state == 'game':
+                        self.state = 'menu'
+                        self.stop_music()
+                    else:
+                        return False
+                else:
+                    self._handle_key_down(event.key, keys_pressed)
+            
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 self._handle_mouse_click(event.pos)
-            
-            elif event.type == pygame.KEYDOWN:
-                self._handle_key_down(event.key, keys_pressed)
             
             elif event.type == pygame.KEYUP:
                 self._handle_key_up(event.key, keys_pressed)

@@ -1,12 +1,17 @@
 [
   {
     "name": "Jugador 1",
-    "score": 20,
+    "score": 90,
     "date": "2025-11-22"
   },
   {
-    "name": "Jugador 2",
-    "score": 20,
+    "name": "Jugador 1",
+    "score": 40,
+    "date": "2025-11-22"
+  },
+  {
+    "name": "Jugador 1",
+    "score": 30,
     "date": "2025-11-22"
   }
 ]
