@@ -49,7 +49,7 @@ LANES = 3
 # Configuración de juego
 BASE_SPEED = 3
 SPEED_INCREMENT = 0.5
-POINTS_PER_CAR = 10
+POINTS_PER_CAR = 1
 SPEED_UP_EVERY = 10
 
 
@@ -90,6 +90,111 @@ CYAN = (0, 255, 255)
 DARK_GREEN = (0, 51, 0)
 GRAY = (51, 51, 51)
 DARK_GRAY = (33, 33, 33)
+
+# Colores adicionales para pieles
+BLUE = (0, 100, 255)
+ORANGE = (255, 165, 0)
+PURPLE = (200, 0, 255)
+PINK = (255, 105, 180)
+LIME = (50, 255, 50)
+GOLD = (255, 215, 0)
+SILVER = (192, 192, 192)
+BRONZE = (205, 127, 50)
+
+
+# ============================================
+# SISTEMA DE PIELES (SKINS)
+# ============================================
+CAR_SKINS = [
+    {
+        'name': 'CLÁSICO',
+        'body': GREEN,
+        'window': CYAN,
+        'wheels': BLACK,
+        'unlock_score': 0
+    },
+    {
+        'name': 'DEPORTIVO AZUL',
+        'body': BLUE,
+        'window': WHITE,
+        'wheels': BLACK,
+        'unlock_score': 500
+    },
+    {
+        'name': 'NARANJA FUEGO',
+        'body': ORANGE,
+        'window': YELLOW,
+        'wheels': BLACK,
+        'unlock_score': 500
+    },
+    {
+        'name': 'PÚRPURA NEÓN',
+        'body': PURPLE,
+        'window': PINK,
+        'wheels': BLACK,
+        'unlock_score': 500
+    },
+    {
+        'name': 'LIMA ELÉCTRICO',
+        'body': LIME,
+        'window': YELLOW,
+        'wheels': BLACK,
+        'unlock_score': 500
+    },
+    {
+        'name': 'CAMPEÓN ORO',
+        'body': GOLD,
+        'window': WHITE,
+        'wheels': BRONZE,
+        'unlock_score': 500
+    }
+]
+
+# Pieles para jugador 2 (modo multijugador)
+CAR_SKINS_P2 = [
+    {
+        'name': 'CLÁSICO',
+        'body': YELLOW,
+        'window': CYAN,
+        'wheels': BLACK,
+        'unlock_score': 0
+    },
+    {
+        'name': 'PLATA RACING',
+        'body': SILVER,
+        'window': CYAN,
+        'wheels': BLACK,
+        'unlock_score': 500
+    },
+    {
+        'name': 'ROSA NEÓN',
+        'body': PINK,
+        'window': WHITE,
+        'wheels': BLACK,
+        'unlock_score': 500
+    },
+    {
+        'name': 'ROJO FERRARI',
+        'body': RED,
+        'window': BLACK,
+        'wheels': DARK_GRAY,
+        'unlock_score': 500
+    },
+    {
+        'name': 'AZUL ELÉCTRICO',
+        'body': CYAN,
+        'window': BLUE,
+        'wheels': BLACK,
+        'unlock_score': 500
+    },
+    {
+        'name': 'BRONCE CLÁSICO',
+        'body': BRONZE,
+        'window': ORANGE,
+        'wheels': BLACK,
+        'unlock_score': 500
+    }
+]
 
 
 # ============================================
@@ -167,6 +272,13 @@ class Player:
         """Inicializa controles y apariencia del jugador"""
         self.controls = PLAYER1_CONTROLS if self.player_num == 1 else PLAYER2_CONTROLS
         self.color = GREEN if self.player_num == 1 else YELLOW
+        
+        # Sistema de pieles
+        self.skins = CAR_SKINS if self.player_num == 1 else CAR_SKINS_P2
+        self.current_skin = 0
+        self.unlocked_skins = [0]  # Piel 0 siempre desbloqueada
+        self.new_skin_unlocked = False
+        self.skin_notification = ""
     
     # ========================================
     # MÉTODOS DE CÁLCULO DE POSICIÓN
@@ -282,9 +394,37 @@ class Player:
     
     def add_score(self, points):
         """Añade puntos y actualiza la velocidad y nivel"""
+        old_score = self.score
         self.score += points
+        
+        # Verificar si se desbloqueó una nueva piel
+        self._check_skin_unlock(old_score)
+        
         self._update_speed()
         self._update_level()
+    
+    
+    def _check_skin_unlock(self, old_score):
+        """Verifica si se desbloqueó una nueva piel"""
+        # Verificar cada 500 puntos
+        if self.score >= 500 and old_score < 500:
+            self._unlock_random_skin()
+    
+    
+    def _unlock_random_skin(self):
+        """Desbloquea una piel aleatoria que aún no esté desbloqueada"""
+        import random
+        
+        # Encontrar pieles bloqueadas
+        locked_skins = [i for i in range(len(self.skins)) 
+                       if i not in self.unlocked_skins and self.skins[i]['unlock_score'] > 0]
+        
+        if locked_skins:
+            new_skin = random.choice(locked_skins)
+            self.unlocked_skins.append(new_skin)
+            self.current_skin = new_skin
+            self.new_skin_unlocked = True
+            self.skin_notification = f"¡NUEVA PIEL: {self.skins[new_skin]['name']}!"
     
     
     def _update_speed(self):
@@ -335,22 +475,34 @@ class Player:
         """Dibuja un auto en la posición especificada"""
         x += self.x_offset
         
+        # Si es el jugador, usar la piel actual
+        if color == self.color:
+            skin = self.skins[self.current_skin]
+            body_color = skin['body']
+            window_color = skin['window']
+            wheel_color = skin['wheels']
+        else:
+            # Para enemigos, usar colores normales
+            body_color = color
+            window_color = CYAN
+            wheel_color = BLACK
+        
         # Cuerpo del auto
-        pygame.draw.rect(surface, color, (x + 5, y, 30, 50))
+        pygame.draw.rect(surface, body_color, (x + 5, y, 30, 50))
         
         # Ventana
-        pygame.draw.rect(surface, CYAN, (x + 8, y + 10, 24, 15))
+        pygame.draw.rect(surface, window_color, (x + 8, y + 10, 24, 15))
         
         # Ruedas
-        self._draw_car_wheels(surface, x, y)
+        self._draw_car_wheels(surface, x, y, wheel_color)
     
     
-    def _draw_car_wheels(self, surface, x, y):
+    def _draw_car_wheels(self, surface, x, y, wheel_color=BLACK):
         """Dibuja las ruedas del auto"""
-        pygame.draw.rect(surface, BLACK, (x, y + 5, 8, 12))
-        pygame.draw.rect(surface, BLACK, (x + 32, y + 5, 8, 12))
-        pygame.draw.rect(surface, BLACK, (x, y + 33, 8, 12))
-        pygame.draw.rect(surface, BLACK, (x + 32, y + 33, 8, 12))
+        pygame.draw.rect(surface, wheel_color, (x, y + 5, 8, 12))
+        pygame.draw.rect(surface, wheel_color, (x + 32, y + 5, 8, 12))
+        pygame.draw.rect(surface, wheel_color, (x, y + 33, 8, 12))
+        pygame.draw.rect(surface, wheel_color, (x + 32, y + 33, 8, 12))
     
     
     def draw(self, surface):
@@ -364,6 +516,28 @@ class Player:
         # Dibujar jugador si está vivo
         if self.alive:
             self.draw_car(surface, self.x, self.y, self.color)
+        
+        # Dibujar notificación de nueva piel
+        if self.new_skin_unlocked:
+            self._draw_skin_notification(surface)
+    
+    
+    def _draw_skin_notification(self, surface):
+        """Dibuja la notificación de nueva piel desbloqueada"""
+        font = pygame.font.Font(None, 36)
+        text_surface = font.render(self.skin_notification, True, GOLD)
+        text_rect = text_surface.get_rect()
+        text_rect.center = (self.x_offset + CANVAS_WIDTH // 2, 50)
+        
+        # Fondo semi-transparente
+        bg_rect = text_rect.inflate(20, 10)
+        bg_surface = pygame.Surface(bg_rect.size)
+        bg_surface.set_alpha(200)
+        bg_surface.fill(BLACK)
+        surface.blit(bg_surface, bg_rect.topleft)
+        
+        # Texto
+        surface.blit(text_surface, text_rect)
     
     
     # ========================================
@@ -432,9 +606,12 @@ class Game:
     
     def _init_game_state(self):
         """Inicializa el estado del juego"""
-        self.state = 'menu'  # 'menu', 'game', 'scores', 'game_over'
+        self.state = 'menu'  # 'menu', 'game', 'scores', 'game_over', 'shop'
         self.game_mode = 'single'  # 'single' o 'multi'
         self.players = []
+        self.selected_player = 1  # Para la tienda
+        self.total_score_p1 = 0
+        self.total_score_p2 = 0
     
     # ========================================
     # MÉTODOS DE AUDIO
@@ -552,6 +729,7 @@ class Game:
         buttons = [
             ("1 JUGADOR", 'single'),
             ("2 JUGADORES", 'multi'),
+            ("TIENDA DE PIELES", 'shop'),
             ("TOP 3 PUNTAJES", 'scores'),
             ("SALIR", 'quit')
         ]
@@ -594,7 +772,7 @@ class Game:
         instructions = [
             "Jugador 1: ← → (Flechas)",
             "Jugador 2: A D (Teclas)",
-            "• 10 pts por adelantar auto • Velocidad aumenta cada 10 pts"
+            "• 1 pt por adelantar auto • Velocidad aumenta cada 10 pts"
         ]
         
         for i, inst in enumerate(instructions):
@@ -651,6 +829,181 @@ class Game:
         self.draw_text("VOLVER", self.font_small, text_color, 
                       SCREEN_WIDTH // 2, SCREEN_HEIGHT - 90)
     
+    
+    def draw_shop_screen(self):
+        """Dibuja la pantalla de tienda de pieles"""
+        self.screen.fill(BLACK)
+        
+        # Fondo
+        self._draw_gradient_background()
+        
+        # Título
+        self.draw_text("🎨 TIENDA DE PIELES 🎨", self.font_large, GREEN, 
+                      SCREEN_WIDTH // 2, 60)
+        
+        # Selector de jugador
+        self._draw_player_selector()
+        
+        # Mostrar puntos acumulados
+        total_score = self.total_score_p1 if self.selected_player == 1 else self.total_score_p2
+        self.draw_text(f"Puntos Totales: {total_score}", self.font_small, YELLOW, 
+                      SCREEN_WIDTH // 2, 140)
+        
+        # Grid de pieles
+        self._draw_skins_grid()
+        
+        # Botón volver
+        self._draw_back_button()
+    
+    
+    def _draw_player_selector(self):
+        """Dibuja el selector de jugador"""
+        mouse_pos = pygame.mouse.get_pos()
+        
+        # Botón Jugador 1
+        button_p1 = pygame.Rect(SCREEN_WIDTH // 2 - 220, 100, 200, 50)
+        self.player_button_1 = button_p1
+        
+        if self.selected_player == 1:
+            pygame.draw.rect(self.screen, GREEN, button_p1)
+            text_color = BLACK
+        elif button_p1.collidepoint(mouse_pos):
+            pygame.draw.rect(self.screen, DARK_GREEN, button_p1)
+            text_color = GREEN
+        else:
+            pygame.draw.rect(self.screen, BLACK, button_p1)
+            text_color = GREEN
+        
+        pygame.draw.rect(self.screen, GREEN, button_p1, 3)
+        self.draw_text("JUGADOR 1", self.font_tiny, text_color, 
+                      SCREEN_WIDTH // 2 - 120, 125)
+        
+        # Botón Jugador 2
+        button_p2 = pygame.Rect(SCREEN_WIDTH // 2 + 20, 100, 200, 50)
+        self.player_button_2 = button_p2
+        
+        if self.selected_player == 2:
+            pygame.draw.rect(self.screen, YELLOW, button_p2)
+            text_color = BLACK
+        elif button_p2.collidepoint(mouse_pos):
+            pygame.draw.rect(self.screen, DARK_GREEN, button_p2)
+            text_color = YELLOW
+        else:
+            pygame.draw.rect(self.screen, BLACK, button_p2)
+            text_color = YELLOW
+        
+        pygame.draw.rect(self.screen, YELLOW, button_p2, 3)
+        self.draw_text("JUGADOR 2", self.font_tiny, text_color, 
+                      SCREEN_WIDTH // 2 + 120, 125)
+    
+    
+    def _draw_skins_grid(self):
+        """Dibuja la cuadrícula de pieles disponibles"""
+        skins = CAR_SKINS if self.selected_player == 1 else CAR_SKINS_P2
+        total_score = self.total_score_p1 if self.selected_player == 1 else self.total_score_p2
+        
+        # Calcular cuántas pieles están desbloqueadas
+        unlocked_count = 1  # Siempre tienen la piel clásica
+        if total_score >= 500:
+            unlocked_count = min(4, 1 + (total_score // 500))  # Máximo 3 pieles adicionales
+        
+        start_x = 100
+        start_y = 200
+        skin_width = 150
+        skin_height = 200
+        spacing = 30
+        skins_per_row = 4
+        
+        self.skin_buttons = []
+        
+        for i, skin in enumerate(skins):
+            row = i // skins_per_row
+            col = i % skins_per_row
+            
+            x = start_x + col * (skin_width + spacing)
+            y = start_y + row * (skin_height + spacing)
+            
+            # Verificar si está desbloqueada
+            is_unlocked = i < unlocked_count
+            
+            # Dibujar tarjeta de piel
+            self._draw_skin_card(x, y, skin_width, skin_height, skin, is_unlocked, i)
+    
+    
+    def _draw_skin_card(self, x, y, width, height, skin, is_unlocked, index):
+        """Dibuja una tarjeta individual de piel"""
+        mouse_pos = pygame.mouse.get_pos()
+        card_rect = pygame.Rect(x, y, width, height)
+        self.skin_buttons.append((card_rect, index, is_unlocked))
+        
+        # Fondo de la tarjeta
+        if is_unlocked:
+            if card_rect.collidepoint(mouse_pos):
+                pygame.draw.rect(self.screen, DARK_GREEN, card_rect)
+            else:
+                pygame.draw.rect(self.screen, BLACK, card_rect)
+            pygame.draw.rect(self.screen, GREEN, card_rect, 3)
+        else:
+            pygame.draw.rect(self.screen, DARK_GRAY, card_rect)
+            pygame.draw.rect(self.screen, GRAY, card_rect, 3)
+        
+        # Dibujar mini carro en el centro
+        car_x = x + width // 2 - 20
+        car_y = y + 50
+        self._draw_mini_car(car_x, car_y, skin, is_unlocked)
+        
+        # Nombre de la piel
+        text_y = y + 130
+        if is_unlocked:
+            self.draw_text(skin['name'], self.font_tiny, skin['body'], 
+                          x + width // 2, text_y)
+        else:
+            self.draw_text(skin['name'], self.font_tiny, GRAY, 
+                          x + width // 2, text_y)
+        
+        # Estado
+        status_y = y + height - 30
+        if is_unlocked:
+            self.draw_text("DESBLOQUEADA", self.font_tiny, GREEN, 
+                          x + width // 2, status_y)
+        else:
+            self.draw_text("🔒 BLOQUEADA", self.font_tiny, RED, 
+                          x + width // 2, status_y)
+            self.draw_text("500 pts", self.font_tiny, YELLOW, 
+                          x + width // 2, status_y + 20)
+    
+    
+    def _draw_mini_car(self, x, y, skin, is_unlocked):
+        """Dibuja un mini carro de muestra"""
+        scale = 1.5
+        
+        if is_unlocked:
+            body_color = skin['body']
+            window_color = skin['window']
+            wheel_color = skin['wheels']
+        else:
+            body_color = GRAY
+            window_color = DARK_GRAY
+            wheel_color = BLACK
+        
+        # Cuerpo
+        pygame.draw.rect(self.screen, body_color, 
+                        (x + 7*scale, y, 45*scale, 75*scale))
+        
+        # Ventana
+        pygame.draw.rect(self.screen, window_color, 
+                        (x + 12*scale, y + 15*scale, 36*scale, 22*scale))
+        
+        # Ruedas
+        pygame.draw.rect(self.screen, wheel_color, 
+                        (x, y + 7*scale, 12*scale, 18*scale))
+        pygame.draw.rect(self.screen, wheel_color, 
+                        (x + 48*scale, y + 7*scale, 12*scale, 18*scale))
+        pygame.draw.rect(self.screen, wheel_color, 
+                        (x, y + 50*scale, 12*scale, 18*scale))
+        pygame.draw.rect(self.screen, wheel_color, 
+                        (x + 48*scale, y + 50*scale, 12*scale, 18*scale))
+    
     def draw_game(self):
         """Dibuja el juego en progreso"""
         self.screen.fill(BLACK)
@@ -668,7 +1021,7 @@ class Game:
         pygame.draw.rect(self.screen, DARK_GREEN, (0, 0, SCREEN_WIDTH, info_height))
         
         for i, player in enumerate(self.players):
-            x = 60 if i == 0 else SCREEN_WIDTH - 240
+            x = 60 if i == 0 else SCREEN_WIDTH - 300
             y = 25
             
             self.draw_text(f"JUGADOR {player.player_num}", self.font_tiny, GREEN, 
@@ -679,11 +1032,17 @@ class Game:
                           x, y + 56, center=False)
             self.draw_text(f"Velocidad: {player.speed_multiplier:.1f}x", self.font_tiny, GREEN, 
                           x, y + 84, center=False)
+            
+            # Mostrar piel actual
+            skin_name = player.skins[player.current_skin]['name']
+            self.draw_text(f"Skin: {skin_name}", self.font_tiny, 
+                          player.skins[player.current_skin]['body'], 
+                          x, y + 112, center=False)
     
     
     def _draw_game_area(self):
         """Dibuja el área de juego con los canvas de los jugadores"""
-        info_height = 110
+        info_height = 140
         game_y = info_height + 15
         
         if self.game_mode == 'single':
@@ -846,10 +1205,29 @@ class Game:
                     return False
                 elif action == 'scores':
                     self.state = 'scores'
+                elif action == 'shop':
+                    self.state = 'shop'
                 else:
                     self.start_game(action)
                 return True
         return True
+    
+    
+    def handle_shop_click(self, pos):
+        """Maneja clics en la tienda de pieles"""
+        # Botón volver
+        if self.back_button.collidepoint(pos):
+            self.state = 'menu'
+            return
+        
+        # Selector de jugador
+        if hasattr(self, 'player_button_1') and self.player_button_1.collidepoint(pos):
+            self.selected_player = 1
+            return
+        
+        if hasattr(self, 'player_button_2') and self.player_button_2.collidepoint(pos):
+            self.selected_player = 2
+            return
     
     
     def handle_scores_click(self, pos):
@@ -892,6 +1270,12 @@ class Game:
     
     def save_score(self, name, score):
         """Guarda una puntuación en el archivo"""
+        # Acumular puntos totales
+        if 'Jugador 1' in name:
+            self.total_score_p1 += score
+        elif 'Jugador 2' in name:
+            self.total_score_p2 += score
+        
         scores = self.get_top_scores()
         
         scores.append({
@@ -1002,6 +1386,8 @@ class Game:
             return self.handle_menu_click(pos)
         elif self.state == 'scores':
             self.handle_scores_click(pos)
+        elif self.state == 'shop':
+            self.handle_shop_click(pos)
         elif self.state == 'game_over':
             self.handle_game_over_click(pos)
     
@@ -1035,6 +1421,8 @@ class Game:
             self.draw_menu()
         elif self.state == 'scores':
             self.draw_scores_screen()
+        elif self.state == 'shop':
+            self.draw_shop_screen()
         elif self.state == 'game':
             self.draw_game()
         elif self.state == 'game_over':
